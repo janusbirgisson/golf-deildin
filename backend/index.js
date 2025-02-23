@@ -36,20 +36,49 @@ app.listen(port, () => {
 app.post('/api/users/register', async (req, res) => {
     const { username, password, email, handicap } = req.body;
 
-    try {
-        const hasedPassword = await bcrypt.hash(password, 10);
+    // Log the incoming request (excluding password)
+    console.log('Registration attempt:', { 
+        username, 
+        email, 
+        handicap,
+        bodyReceived: !!req.body 
+    });
 
+    try {
+        // Log before hashing
+        console.log('Hashing password...');
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Log after hashing
+        console.log('Password hashed successfully');
 
         const result = await pool.query(
             `INSERT INTO users (username, password, email, handicap)
             VALUES ($1, $2, $3, $4)
             RETURNING id, username, email, handicap`,
-            [username, hasedPassword, email, handicap]
+            [username, hashedPassword, email, handicap]
         );
+
+        // Log after query execution
+        console.log('User registered successfully');
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        console.error('Error executing query', error);
-        res.status(500).json( { error: 'Error registering user' });
+        console.error('Registration error:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            stack: error.stack
+        });
+        
+        // Send more specific error response
+        if (error.code === '23505') {
+            res.status(400).json({ error: 'Username or email already exists' });
+        } else {
+            res.status(500).json({ 
+                error: 'Error registering user',
+                details: error.message 
+            });
+        }
     }
 });
 
@@ -140,5 +169,16 @@ app.post('/api/users/login', async (req, res) => {
     }   catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ error: 'Internal server error during login' });
+    }
+});
+
+// Add this test endpoint
+app.get('/api/test-db', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT NOW()');
+        res.json({ success: true, timestamp: result.rows[0].now });
+    } catch (error) {
+        console.error('Database connection test failed:', error);
+        res.status(500).json({ error: 'Database connection failed', details: error.message });
     }
 });

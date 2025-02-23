@@ -2,20 +2,35 @@ import React from "react";
 import { useEffect, useState } from "react";
 
 
-function Leaderboard() {
-    const [rounds, setRounds] = useState([]);
+function Leaderboard() { 
+  /** @type {[Array<{id: number, username: string, date_played: string, course_name: string, gross_score: number, handicap: number, net_score: number, created_at: string}>, Function]} */
+const [rounds, setRounds] = useState([]);
 
     useEffect(() => {
-        fetch('/api/rounds')
-            .then(res => res.json())
-            .then(data => setRounds(data))
-            .catch((error) => console.error('Error fetching rounds:', error));
-    }, []);
+      fetch('/api/rounds')
+          .then(res => {
+              if (!res.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              return res.json();
+          })
+          .then(data => {
+              if (!Array.isArray(data)) {
+                  console.error('Expected array but got:', data);
+                  setRounds([]);
+                  return;
+              }
+              setRounds(data);
+          })
+          .catch((error) => {
+              console.error('Error fetching rounds:', error);
+              setRounds([]);
+          });
+  }, []);
 
     return (
         <div>
         <h2>Leaderboard</h2>
-        {/* Simple table to list rounds */}
         <table>
           <thead>
             <tr>

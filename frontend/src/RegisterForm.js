@@ -18,6 +18,13 @@ function RegisterForm() {
             handicap: parseInt(handicap, 10)
         };
 
+        // Log the request data (excluding password)
+        console.log('Sending registration request:', {
+            username: newUser.username,
+            email: newUser.email,
+            handicap: newUser.handicap
+        });
+
         fetch('/api/users/register', {
             method: 'POST',
             headers: {
