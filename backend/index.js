@@ -8,6 +8,8 @@ const app = express();
 const port = process.env.PORT || 4000;
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('./middleware/auth');
+const { getCurrentWeek, getWeekDeadline } = require('./src/utils/weekCalculator');
+const cron = require('node-cron');
 
 // Middleware
 app.use(cors());
@@ -20,6 +22,41 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'golf_deildin',
     password: process.env.DB_PASS || 'aserthebest',
     port: parseInt(process.env.DB_PORT || '5432', 10)
+});
+
+// Run every Sunday at 23:59
+cron.schedule('59 23 * * 0', async () => {
+    const { week, year } = getCurrentWeek();
+    
+    try {
+        // Get all rounds for the week
+        const rounds = await pool.query(`
+            SELECT 
+                r.id,
+                r.user_id,
+                r.gross_score,
+                u.handicap,
+                (r.gross_score - u.handicap) as net_score
+            FROM rounds r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.week_number = $1 AND r.year = $2
+            ORDER BY (r.gross_score - u.handicap) ASC
+        `, [week, year]);
+
+        // Calculate points (example: 10 points for 1st, 8 for 2nd, etc.)
+        const points = [10, 8, 6, 4, 2];
+        
+        // Insert standings
+        for (let i = 0; i < rounds.rows.length; i++) {
+            const round = rounds.rows[i];
+            await pool.query(`
+                INSERT INTO weekly_standings (week_number, year, user_id, round_id, points)
+                VALUES ($1, $2, $3, $4, $5)
+            `, [week, year, round.user_id, round.id, points[i] || 1]);
+        }
+    } catch (error) {
+        console.error('Error calculating weekly points:', error);
+    }
 });
 
 // Routes
@@ -36,7 +73,6 @@ app.listen(port, () => {
 app.post('/api/users/register', async (req, res) => {
     const { username, password, email, handicap } = req.body;
 
-    // Log the incoming request (excluding password)
     console.log('Registration attempt:', { 
         username, 
         email, 
@@ -45,11 +81,9 @@ app.post('/api/users/register', async (req, res) => {
     });
 
     try {
-        // Log before hashing
         console.log('Hashing password...');
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Log after hashing
         console.log('Password hashed successfully');
 
         const result = await pool.query(
@@ -59,7 +93,6 @@ app.post('/api/users/register', async (req, res) => {
             [username, hashedPassword, email, handicap]
         );
 
-        // Log after query execution
         console.log('User registered successfully');
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -70,7 +103,6 @@ app.post('/api/users/register', async (req, res) => {
             stack: error.stack
         });
         
-        // Send more specific error response
         if (error.code === '23505') {
             res.status(400).json({ error: 'Username or email already exists' });
         } else {
@@ -79,6 +111,25 @@ app.post('/api/users/register', async (req, res) => {
                 details: error.message 
             });
         }
+    }
+});
+
+app.get('/api/standings/overall', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                u.username,
+                SUM(ws.points) as total_points
+            FROM users u
+            LEFT JOIN weekly_standings ws ON u.id = ws.user_id
+            GROUP BY u.id, u.username
+            ORDER BY total_points DESC NULLS LAST
+        `);
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching overall standings:', error);
+        res.status(500).json({ error: 'Error fetching overall standings' });
     }
 });
 
@@ -110,21 +161,28 @@ app.get('/api/rounds', async (req, res) => {
 });
 
 app.post('/api/rounds', authMiddleware, async (req, res) => {
-    const { userId } = req.user;
     const { date_played, course_name, gross_score } = req.body;
+    const { week, year } = getCurrentWeek();
+    const deadline = getWeekDeadline(week, year);
 
     try {
+        // Check if past deadline
+        if (new Date() > deadline) {
+            return res.status(400).json({ error: 'Past deadline for this week' });
+        }
+
+        // Insert new round
         const result = await pool.query(
-            `INSERT INTO rounds (user_id, date_played, course_name, gross_score)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id, user_id, date_played, course_name, gross_score, created_at`,
-            [userId, date_played, course_name, gross_score]
+            `INSERT INTO rounds (user_id, date_played, course_name, gross_score, week_number, year)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id`,
+            [req.user.userId, date_played, course_name, gross_score, week, year]
         );
 
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        console.error('Error inserting round:', error);
-        res.status(500).json({ error: 'Error inserting round' });
+        console.error('Error submitting round:', error);
+        res.status(500).json({ error: 'Error submitting round' });
     }
 });
 
@@ -172,7 +230,6 @@ app.post('/api/users/login', async (req, res) => {
     }
 });
 
-// Add this test endpoint
 app.get('/api/test-db', async (req, res) => {
     try {
         const result = await pool.query('SELECT NOW()');
@@ -180,5 +237,39 @@ app.get('/api/test-db', async (req, res) => {
     } catch (error) {
         console.error('Database connection test failed:', error);
         res.status(500).json({ error: 'Database connection failed', details: error.message });
+    }
+});
+
+app.get('/api/standings/weekly', async (req, res) => {
+    const { week, year } = req.query.week ? 
+        { week: parseInt(req.query.week), year: parseInt(req.query.year) } : 
+        getCurrentWeek();
+
+    try {
+        const result = await pool.query(`
+            SELECT 
+                u.username,
+                r.gross_score,
+                u.handicap,
+                (r.gross_score - u.handicap) as net_score,
+                COALESCE(ws.points, 0) as points
+            FROM users u
+            LEFT JOIN (
+                SELECT DISTINCT ON (user_id) *
+                FROM rounds
+                WHERE week_number = $1 AND year = $2
+                ORDER BY user_id, created_at DESC
+            ) r ON u.id = r.user_id
+            LEFT JOIN weekly_standings ws ON u.id = ws.user_id 
+                AND ws.week_number = $1 
+                AND ws.year = $2
+            WHERE r.id IS NOT NULL
+            ORDER BY net_score ASC
+        `, [week, year]);
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching standings:', error);
+        res.status(500).json({ error: 'Error fetching standings' });
     }
 });

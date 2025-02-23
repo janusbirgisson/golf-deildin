@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import Leaderboard from './Leaderboard';
 import React from 'react';
-import ScoreForm from './ScoreForm';
-import RegisterForm from './RegisterForm';
-import LoginForm from './LoginForm';
+
+import Leaderboard from './components/Leaderboard';
+import ScoreForm from './components/ScoreForm';
+import RegisterForm from './components/RegisterForm';
+import LoginForm from './components/LoginForm';
 
 
 function App() {

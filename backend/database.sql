@@ -12,5 +12,17 @@ CREATE TABLE rounds (
   date_played DATE NOT NULL,
   course_name VARCHAR(100) NOT NULL,
   gross_score INTEGER NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  week_number INTEGER NOT NULL,
+  year INTEGER NOT NULL
+);
+
+CREATE TABLE weekly_standings (
+    id SERIAL PRIMARY KEY,
+    week_number INTEGER NOT NULL,
+    user_id INTEGER REFERENCES users(id),
+    round_id INTEGER REFERENCES rounds(id),
+    points INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    UNIQUE(week_number, user_id, year)
 );

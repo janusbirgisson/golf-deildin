@@ -13,8 +13,16 @@ function authMiddleware(req, res, next) {
         return res.status(401).json({ error: 'No token provided'});
     }
 
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+        throw new Error('JWT_SECRET is not defined');
+    }
+
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (!decoded || typeof decoded !== 'object') {
+            throw new Error('Invalid token payload');
+        }
 
         req.user = {
             userId: decoded.userId,

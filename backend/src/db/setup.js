@@ -21,7 +21,7 @@ async function setupDatabase() {
 
         // Read and execute the SQL file
         console.log('Creating new tables...');
-        const sqlFile = await fs.readFile(path.join(__dirname, '..', 'database.sql'), 'utf8');
+        const sqlFile = await fs.readFile(path.join(__dirname, '..', '..', 'database.sql'), 'utf8');
         await pool.query(sqlFile);
 
         console.log('Database setup completed successfully!');
