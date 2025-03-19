@@ -1,3 +1,13 @@
+## Til að kveikja á:
+- `pg_ctl -D /usr/local/var/postgres stop`
+- `docker-compose down`
+- `docker-compose up -d`
+- `cd backend && npm start`
+- `cd frontend && npm start`
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

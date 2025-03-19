@@ -6,15 +6,37 @@ const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'golf_deildin',
-    password: 'aserthebest', // match your Docker postgres password
+    password: 'aserthebest',
     port: 5432,
 });
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function waitForDb(maxAttempts = 5) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            console.log(`Attempting to connect to database (attempt ${attempt}/${maxAttempts})...`);
+            await pool.query('SELECT 1');
+            console.log('Successfully connected to database!');
+            return true;
+        } catch (error) {
+            console.log(`Connection attempt ${attempt} failed:`, error.message);
+            if (attempt === maxAttempts) {
+                throw new Error('Max attempts reached. Could not connect to database.');
+            }
+            await delay(2000); // Wait 2 seconds before next attempt
+        }
+    }
+}
+
 async function setupDatabase() {
     try {
+        await waitForDb();
+
         // First, drop existing tables if they exist
         console.log('Dropping existing tables...');
         await pool.query(`
+            DROP TABLE IF EXISTS weekly_standings;
             DROP TABLE IF EXISTS rounds;
             DROP TABLE IF EXISTS users;
         `);
@@ -33,3 +55,5 @@ async function setupDatabase() {
 }
 
 setupDatabase();
+
+module.exports = { pool };

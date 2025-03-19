@@ -1,12 +1,14 @@
 import React from "react";
 import WeeklyStandings from './WeeklyStandings';
 import OverallStandings from './OverallStandings';
-
+import './Leaderboard.css';
+import DeadlineCountdown from './DeadlineCountdown';
 function Leaderboard() {
     return (
-        <div>
+        <div className="leaderboard-container">
             <h2>Golf League Standings</h2>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '2rem' }}>
+            <DeadlineCountdown />
+            <div className="standings-layout">
                 <WeeklyStandings />
                 <OverallStandings />
             </div>

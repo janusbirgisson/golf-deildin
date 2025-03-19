@@ -6,8 +6,8 @@ import Leaderboard from './components/Leaderboard';
 import ScoreForm from './components/ScoreForm';
 import RegisterForm from './components/RegisterForm';
 import LoginForm from './components/LoginForm';
-
-
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 function App() {
   const [user, setUser] = useState(null);
 
@@ -26,27 +26,14 @@ function App() {
 
   return (
     <Router>
-      <nav>
-        <Link to="/">Home</Link> |{' '}
-        {!user ? (
-          <>
-            <Link to="/login">Login</Link> |{' '}
-            <Link to="/register">Register</Link>
-          </>
-        ) : (
-          <>
-            <Link to="/submit">Submit a Round</Link> |{' '}
-            <button onClick={handleLogout}>Logout</button>
-          </>
-        )}
-      </nav>
-
+      <Navbar user={user} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<Leaderboard />} />
-        <Route path="/register" element={<RegisterForm /> } />
+        <Route path="/register" element={<RegisterForm />} />
         <Route path="/login" element={<LoginForm onLoginSuccess={setUser} />} />
         <Route path="/submit" element={user ? <ScoreForm /> : <Navigate to="/login" />} />
       </Routes>
+      <Footer />
     </Router>
   );
 }

@@ -1,88 +1,167 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './ScoreForm.css';
 
 function ScoreForm() {
     const navigate = useNavigate();
-    const [datePlayed, setDatePlayed] = useState('');
-    const [courseName, setCourseName] = useState('');
-    const [grossScore, setGrossScore] = useState('');
+    const [formData, setFormData] = useState({
+        course: '',
+        score: '',
+        date: new Date().toISOString().split('T')[0],
+        handicap: '',
+        notes: ''
+    });
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    const validateScore = (score) => {
+        const numScore = parseInt(score, 10);
+        return numScore > 0 && numScore < 200; // Basic validation for realistic golf scores
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setSuccess('');
+        setIsSubmitting(true);
 
-        const newRound = {
-            user_id : 1,
-            date_played: datePlayed,
-            course_name: courseName,
-            gross_score: parseInt(grossScore, 10)
-        };
+        // Validate score
+        if (!validateScore(formData.score)) {
+            setError('Please enter a valid score (between 1 and 200)');
+            setIsSubmitting(false);
+            return;
+        }
 
-        fetch('/api/rounds', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('token')
-            },
-            body: JSON.stringify(newRound)
-        })
-        .then((res) => {
-            if (!res.ok) {
-              throw new Error('Network response was not ok.');
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
             }
-            return res.json();
-          })
-          .then((data) => {
-            console.log('New round saved:', data);
-            navigate('/');
-          })
-          .catch((err) => {
-            console.error('Error submitting round:', err);
-          });
-      };
 
-      return (
-        <div>
-            <h2>Submit a Round</h2>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="datePlayed">Date Played:</label>
-                    <input
-                        type="date"
-                        id="datePlayed"
-                        value={datePlayed}
-                        onChange={(e) => setDatePlayed(e.target.value)}
-                        required
-                    />
-                </div>
+            // Updated endpoint to match backend
+            const response = await fetch('/api/rounds', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    date_played: formData.date,
+                    course_name: formData.course,
+                    gross_score: parseInt(formData.score, 10),
+                    handicap: parseInt(formData.handicap, 10)
+                }),
+            });
 
-                <div>
-                    <label htmlFor="courseName">Course Name</label>
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to submit score');
+            }
+
+            setSuccess('Score submitted successfully!');
+            
+            setTimeout(() => {
+                navigate('/');
+            }, 1000);
+
+        } catch (err) {
+            setError(err.message || 'An error occurred while submitting the score');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="container">
+            <form className="score-form" onSubmit={handleSubmit}>
+                <h2>Skrá hring</h2>
+                
+                {error && (
+                    <div className="alert alert-error">
+                        {error}
+                    </div>
+                )}
+
+                {success && (
+                    <div className="alert alert-success">
+                        {success}
+                    </div>
+                )}
+
+                <div className="form-group">
+                    <label htmlFor="course">Golfvöllur</label>
                     <input
                         type="text"
-                        id="courseName"
-                        value={courseName}
-                        onChange={(e) => setCourseName(e.target.value)}
+                        id="course"
+                        name="course"
+                        value={formData.course}
+                        onChange={handleChange}
                         required
+                        placeholder="Sláðu inn nafn golfvallarins"
                     />
                 </div>
 
-                <div>
-                    <label htmlFor="grossScore">Gross Score:</label>
+                <div className="form-group">
+                    <label htmlFor="score">Skor</label>
                     <input
                         type="number"
-                        id="grossScore"
-                        value={grossScore}
-                        onChange={(e) => setGrossScore(e.target.value)}
+                        id="score"
+                        name="score"
+                        value={formData.score}
+                        onChange={handleChange}
                         required
+                        min="1"
+                        max="199"
+                        placeholder="Sláðu inn heildarfjölda högga á hringnum"
                     />
                 </div>
 
-                 <button type="submit">Submit</button>
+                <div className="form-group">
+                    <label htmlFor="handicap">Forgjöf</label>
+                    <input
+                        type="number"
+                        id="handicap"
+                        name="handicap"
+                        value={formData.handicap}
+                        onChange={handleChange}
+                        required
+                        placeholder="Sláðu inn núverandi forgjöf"
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="date">Dagsetning</label>
+                    <input
+                        type="date"
+                        id="date"
+                        name="date"
+                        value={formData.date}
+                        onChange={handleChange}
+                        required
+                        max={new Date().toISOString().split('T')[0]} // Can't select future dates
+                    />
+                </div>
+
+                <button 
+                    type="submit" 
+                    className="btn-primary"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? 'Verið  er að skrá hringinn...' : 'Skrá hring'}
+                </button>
             </form>
         </div>
-      );
+    );
 }
 
 export default ScoreForm;

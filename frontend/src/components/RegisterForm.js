@@ -1,107 +1,131 @@
-import React from "react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import './RegisterForm.css';
 
 function RegisterForm() {
-    const [username, setUsername] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [handicap, setHandicap] = useState('');
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        handicap: ''
+    });
+    const [error, setError] = useState('');
     const navigate = useNavigate();
-    const handleSubmit = (e) => {
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
 
-        const newUser = {
-            username,
-            email,
-            password,
-            handicap: parseInt(handicap, 10)
-        };
+        try {
+            const response = await fetch('/api/users/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    handicap: parseInt(formData.handicap, 10)
+                }),
+            });
 
-        console.log('Sending registration request:', {
-            username: newUser.username,
-            email: newUser.email,
-            handicap: newUser.handicap
-        });
+            const data = await response.json();
 
-        fetch('/api/users/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newUser),
-        })
-        .then((res) => {
-            if (res.ok) {
-                return res.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Registration failed');
             }
-            throw new Error('Registration failed');
-        })
-        .then((data) => {
-            console.log('User registered:', data);
-            setUsername('');
-            setEmail('');
-            setPassword('');
-            setHandicap('');
+
+            // Clear form and redirect to login
+            setFormData({
+                username: '',
+                email: '',
+                password: '',
+                handicap: ''
+            });
             navigate('/login');
-        })
-        .catch((error) => {
-            console.error('Error registering user', error);
-        });
+
+        } catch (err) {
+            setError(err.message || 'An error occurred during registration');
+        }
     };
 
     return (
-        <div>
-            <h2>Register</h2>
-            <form onSubmit={handleSubmit}>
-            <div>
-                <label htmlFor="username">Username:</label>
-                <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                />
-            </div>
+        <div className="container">
+            <form className="auth-form" onSubmit={handleSubmit}>
+                <h2>Nýskráning</h2>
+                
+                {error && (
+                    <div className="alert alert-error">
+                        {error}
+                    </div>
+                )}
 
-            <div>
-                <label htmlFor="email">Email:</label>
-                <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-            </div>
+                <div className="form-group">
+                    <label htmlFor="username">Notendanafn</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
 
-            <div>
-                <label htmlFor="password">Password:</label>
-                <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-            </div>
+                <div className="form-group">
+                    <label htmlFor="email">Netfang</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
 
-            <div>
-                <label htmlFor="handicap">Handicap:</label>
-                <input
-                    type="number"
-                    id="handicap"
-                    value={handicap}
-                    onChange={(e) => setHandicap(e.target.value)}
-                    required
-                />
-            </div>
+                <div className="form-group">
+                    <label htmlFor="password">Lykilorð</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
+                    <small>Lykilorð verður að vera að minnsta kosti 8 stafir</small>
+                </div>
 
-            <button type="submit">Register</button>
+                <div className="form-group">
+                    <label htmlFor="handicap">Forgjöf</label>
+                    <input
+                        type="number"
+                        id="handicap"
+                        name="handicap"
+                        value={formData.handicap}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+
+                <button type="submit" className="btn-primary">
+                    Nýskrá
+                </button>
+
+                <div className="form-help">
+                    Ertu nú þegar skráður? <Link to="/login">Innskráning hér</Link>
+                </div>
             </form>
         </div>
-    )
+    );
 }
 
 export default RegisterForm;

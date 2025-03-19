@@ -1,37 +1,62 @@
-const { default: React } = require("react");
-const { useState, useEffect } = require("react");
+import React, { useState, useEffect } from "react";
+import './Standings.css';
 
-export default function OverallStandings() {
+function OverallStandings() {
     const [standings, setStandings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        setLoading(true);
         fetch('/api/standings/overall')
-            .then(res => res.json())
-            .then(data => setStandings(data))
-            .catch(error => console.error('Error:', error));
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch standings');
+                return res.json();
+            })
+            .then(data => {
+                setStandings(data);
+                setError(null);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                setError('Failed to load standings');
+            })
+            .finally(() => setLoading(false));
     }, []);
 
+    if (loading) return <div className="standings-section">Loading...</div>;
+    if (error) return <div className="standings-section">Error: {error}</div>;
+
     return (
-        <div>
-            <h3>Overall League Standings</h3>
-            <table>
+        <div className="standings-section">
+            <h3>Heildarstaðan</h3>
+            <table className="standings-table">
                 <thead>
                     <tr>
-                        <th>Position</th>
-                        <th>Player</th>
-                        <th>Total Points</th>
+                        <th>Sæti</th>
+                        <th>Golfari</th>
+                        <th>Heildarstig</th>
                     </tr>
                 </thead>
                 <tbody>
                     {standings.map((standing, index) => (
-                        <tr key={index}>
-                            <td>{index + 1}</td>
-                            <td>{standing.username}</td>
-                            <td>{standing.total_points}</td>
+                        <tr key={standing.username || index}>
+                            <td className="position">{index + 1}</td>
+                            <td className="player-name">{standing.username}</td>
+                            <td className="points">{standing.total_points || 0}</td>
                         </tr>
                     ))}
+                    {standings.length === 0 && (
+                        <tr>
+                            <td colSpan="3" style={{textAlign: 'center'}}>
+                                Engin staða aðgengileg
+                            </td>
+                        </tr>
+                    )}
                 </tbody>
             </table>
         </div>
     );
 }
+
+export default OverallStandings;

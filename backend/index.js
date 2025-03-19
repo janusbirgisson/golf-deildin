@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./src/tasks/calculateWeeklyPoints');
 
 const express = require('express');
 const cors = require('cors');
@@ -10,6 +11,9 @@ const jwt = require('jsonwebtoken');
 const authMiddleware = require('./middleware/auth');
 const { getCurrentWeek, getWeekDeadline } = require('./src/utils/weekCalculator');
 const cron = require('node-cron');
+const { testWeeklyCalculation } = require('./src/tasks/calculateWeeklyPoints');
+
+
 
 // Middleware
 app.use(cors());
@@ -18,45 +22,10 @@ app.use(express.json());
 // Database connection
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || 'db.golf-deildin.orb.local',
     database: process.env.DB_NAME || 'golf_deildin',
-    password: process.env.DB_PASS || 'aserthebest',
+    password: process.env.DB_PASSWORD || 'aserthebest',
     port: parseInt(process.env.DB_PORT || '5432', 10)
-});
-
-// Run every Sunday at 23:59
-cron.schedule('59 23 * * 0', async () => {
-    const { week, year } = getCurrentWeek();
-    
-    try {
-        // Get all rounds for the week
-        const rounds = await pool.query(`
-            SELECT 
-                r.id,
-                r.user_id,
-                r.gross_score,
-                u.handicap,
-                (r.gross_score - u.handicap) as net_score
-            FROM rounds r
-            JOIN users u ON r.user_id = u.id
-            WHERE r.week_number = $1 AND r.year = $2
-            ORDER BY (r.gross_score - u.handicap) ASC
-        `, [week, year]);
-
-        // Calculate points (example: 10 points for 1st, 8 for 2nd, etc.)
-        const points = [10, 8, 6, 4, 2];
-        
-        // Insert standings
-        for (let i = 0; i < rounds.rows.length; i++) {
-            const round = rounds.rows[i];
-            await pool.query(`
-                INSERT INTO weekly_standings (week_number, year, user_id, round_id, points)
-                VALUES ($1, $2, $3, $4, $5)
-            `, [week, year, round.user_id, round.id, points[i] || 1]);
-        }
-    } catch (error) {
-        console.error('Error calculating weekly points:', error);
-    }
 });
 
 // Routes
@@ -119,7 +88,7 @@ app.get('/api/standings/overall', async (req, res) => {
         const result = await pool.query(`
             SELECT 
                 u.username,
-                SUM(ws.points) as total_points
+                COALESCE(SUM(ws.points), 0) as total_points
             FROM users u
             LEFT JOIN weekly_standings ws ON u.id = ws.user_id
             GROUP BY u.id, u.username
@@ -161,7 +130,7 @@ app.get('/api/rounds', async (req, res) => {
 });
 
 app.post('/api/rounds', authMiddleware, async (req, res) => {
-    const { date_played, course_name, gross_score } = req.body;
+    const { date_played, course_name, gross_score, handicap } = req.body;
     const { week, year } = getCurrentWeek();
     const deadline = getWeekDeadline(week, year);
 
@@ -171,15 +140,32 @@ app.post('/api/rounds', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Past deadline for this week' });
         }
 
-        // Insert new round
-        const result = await pool.query(
-            `INSERT INTO rounds (user_id, date_played, course_name, gross_score, week_number, year)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             RETURNING id`,
-            [req.user.userId, date_played, course_name, gross_score, week, year]
-        );
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
 
-        res.status(201).json(result.rows[0]);
+            // Update user handicap
+            await client.query(
+                `UPDATE users SET handicap = $1 WHERE id = $2`,
+                [handicap, req.user.userId]
+            );
+
+            // Insert new round
+            const result = await client.query(
+                `INSERT INTO rounds (user_id, date_played, course_name, gross_score, week_number, year)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 RETURNING id`,
+                [req.user.userId, date_played, course_name, gross_score, week, year]
+            );
+
+            await client.query('COMMIT');
+            res.status(201).json(result.rows[0]);
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     } catch (error) {
         console.error('Error submitting round:', error);
         res.status(500).json({ error: 'Error submitting round' });
@@ -245,6 +231,8 @@ app.get('/api/standings/weekly', async (req, res) => {
         { week: parseInt(req.query.week), year: parseInt(req.query.year) } : 
         getCurrentWeek();
 
+    console.log('Backend: Fetching standings for week:', week, 'year:', year);
+
     try {
         const result = await pool.query(`
             SELECT 
@@ -267,9 +255,20 @@ app.get('/api/standings/weekly', async (req, res) => {
             ORDER BY net_score ASC
         `, [week, year]);
 
+        console.log('Backend: Query results:', result.rows);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching standings:', error);
+        console.error('Backend: Error fetching standings:', error);
         res.status(500).json({ error: 'Error fetching standings' });
+    }
+});
+
+app.post('/api/test-weekly-calculation', async (req, res) => {
+    try {
+        await testWeeklyCalculation();
+        res.json({ success: true, message: 'Weekly calculation test completed' });
+    } catch (error) {
+        console.error('Error during weekly calculation test:', error);
+        res.status(500).json({ error: 'Error during weekly calculation test' });
     }
 });
