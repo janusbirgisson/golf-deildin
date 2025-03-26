@@ -1,38 +1,144 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import "./Navbar.css";
 
 function Navbar({ user, onLogout }) {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
     return (
-        <header className="main-header">
-            <nav className="main-nav">
-                <div className="nav-brand">
-                    <Link to="/">Golf deildin</Link>
+        <header className="bg-white shadow-md">
+            <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between h-16 items-center">
+                    <div className="flex-shrink-0">
+                        <Link to="/" className="text-xl font-bold text-gray-800">
+                            Golf deildin
+                        </Link>
+                    </div>
+
+                    <div className="md:hidden">
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none"
+                        >
+                            <svg
+                                className="h-6 w-6"
+                                stroke="currentColor"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                {isMenuOpen ? (
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                ) : (
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                )}
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div className="hidden md:flex md:items-center md:space-x-4">
+                        {user ? (
+                            <>
+                                <span className="text-gray-700">
+                                    Velkominn, {user.username}
+                                </span>
+                                <Link to="/" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md">
+                                    Forsíða
+                                </Link>
+                                <Link to="/submit" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md">
+                                    Skrá skor
+                                </Link>
+                                <button
+                                    onClick={onLogout}
+                                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md"
+                                >
+                                    Útskráning
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md">
+                                    Forsíða
+                                </Link>
+                                <Link to="/login" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md">
+                                    Innskráning
+                                </Link>
+                                <Link to="/register" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md">
+                                    Nýskráning
+                                </Link>
+                            </>
+                        )}
+                    </div>
                 </div>
-                <div className="nav-links">
-                    {user ? (
-                        <>
-                            <span className="user-status">
-                                Velkominn, {user.username}
-                            </span>
-                            <Link to="/">Forsíða</Link>
-                            <Link to="/submit">Skrá skor</Link>
-                            <button onClick={onLogout} className="btn-link">
-                                Útskráning
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <Link to="/">Forsíða</Link>
-                            <Link to="/login">Innskráning</Link>
-                            <Link to="/register">Nýskráning</Link>
-                        </>
-                    )}
+
+                <div className={`${isMenuOpen ? 'block' : 'hidden'} md:hidden`}>
+                    <div className="px-2 pt-2 pb-3 space-y-1">
+                        {user ? (
+                            <>
+                                <span className="block text-gray-700 px-3 py-2">
+                                    Velkominn, {user.username}
+                                </span>
+                                <Link
+                                    to="/"
+                                    className="block text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Forsíða
+                                </Link>
+                                <Link
+                                    to="/submit"
+                                    className="block text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Skrá skor
+                                </Link>
+                                <button
+                                    onClick={() => {
+                                        onLogout();
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="block w-full text-left text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md"
+                                >
+                                    Útskráning
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link
+                                    to="/"
+                                    className="block text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Forsíða
+                                </Link>
+                                <Link
+                                    to="/login"
+                                    className="block text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Innskráning
+                                </Link>
+                                <Link
+                                    to="/register"
+                                    className="block text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Nýskráning
+                                </Link>
+                            </>
+                        )}
+                    </div>
                 </div>
             </nav>
-
         </header>
-        
     );
 }
 

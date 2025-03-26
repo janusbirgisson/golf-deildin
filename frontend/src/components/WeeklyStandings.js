@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { getCurrentWeek } from "./weekCalculator";
 import './Standings.css';
+import { useNavigate } from 'react-router-dom';
 
 function WeeklyStandings() {
     const [standings, setStandings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { week, year } = getCurrentWeek();
+    const navigate = useNavigate();
 
     useEffect(() => {
         setLoading(true);
@@ -23,6 +25,11 @@ function WeeklyStandings() {
             })
             .finally(() => setLoading(false));
     }, [week, year]);
+
+    const handleUserClick = (username) => {
+        const { week, year } = getCurrentWeek();
+        navigate(`/weekly-user/${encodeURIComponent(username)}/${week}/${year}`);
+    };
 
     if (loading) return <div className="standings-section">Loading...</div>;
     if (error) return <div className="standings-section">Error: {error}</div>;
@@ -44,7 +51,13 @@ function WeeklyStandings() {
                     {standings.map((standing, index) => (
                         <tr key={standing.username || index}>
                             <td className="position">{index + 1}</td>
-                            <td className="player-name">{standing.username}</td>
+                            <td 
+                                className="player-name clickable" 
+                                onClick={() => handleUserClick(standing.username)}
+                                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                {standing.username}
+                            </td>
                             <td className="gross-score">{standing.gross_score}</td>
                             <td className="handicap">{standing.handicap}</td>
                             <td className="net-score">{standing.net_score}</td>

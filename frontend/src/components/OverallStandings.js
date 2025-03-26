@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import './Standings.css';
+import { useNavigate } from 'react-router-dom';
 
 function OverallStandings() {
     const [standings, setStandings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const navigate = useNavigate();
     useEffect(() => {
         setLoading(true);
         fetch('/api/standings/overall')
@@ -23,6 +24,10 @@ function OverallStandings() {
             })
             .finally(() => setLoading(false));
     }, []);
+
+    const handleUserClick = (username) => {
+        navigate(`/user/${encodeURIComponent(username)}`);
+    };
 
     if (loading) return <div className="standings-section">Loading...</div>;
     if (error) return <div className="standings-section">Error: {error}</div>;
@@ -42,7 +47,13 @@ function OverallStandings() {
                     {standings.map((standing, index) => (
                         <tr key={standing.username || index}>
                             <td className="position">{index + 1}</td>
-                            <td className="player-name">{standing.username}</td>
+                            <td 
+                                className="player-name clickable" 
+                                onClick={() => handleUserClick(standing.username)}
+                                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                {standing.username}
+                            </td>
                             <td className="points">{standing.total_points || 0}</td>
                         </tr>
                     ))}

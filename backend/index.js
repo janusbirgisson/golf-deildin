@@ -174,6 +174,8 @@ app.post('/api/rounds', authMiddleware, async (req, res) => {
 
 app.post('/api/users/login', async (req, res) => {
     const { email, password } = req.body;
+    
+    console.log('Login attempt:', { email }); // Don't log password
 
     try {
         const userResult = await pool.query(
@@ -183,6 +185,8 @@ app.post('/api/users/login', async (req, res) => {
            [email]
         );
 
+        console.log('User found:', userResult.rowCount > 0);
+
         if (userResult.rowCount === 0) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -190,6 +194,8 @@ app.post('/api/users/login', async (req, res) => {
         const user = userResult.rows[0];
 
         const passwordMatch = await bcrypt.compare(password, user.password);
+        console.log('Password match:', passwordMatch);
+
         if (!passwordMatch) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -210,7 +216,7 @@ app.post('/api/users/login', async (req, res) => {
                 handicap: user.handicap
             }
         });
-    }   catch (error) {
+    } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ error: 'Internal server error during login' });
     }
@@ -246,7 +252,7 @@ app.get('/api/standings/weekly', async (req, res) => {
                 SELECT DISTINCT ON (user_id) *
                 FROM rounds
                 WHERE week_number = $1 AND year = $2
-                ORDER BY user_id, created_at DESC
+                ORDER BY user_id, (gross_score) ASC
             ) r ON u.id = r.user_id
             LEFT JOIN weekly_standings ws ON u.id = ws.user_id 
                 AND ws.week_number = $1 
@@ -270,5 +276,106 @@ app.post('/api/test-weekly-calculation', async (req, res) => {
     } catch (error) {
         console.error('Error during weekly calculation test:', error);
         res.status(500).json({ error: 'Error during weekly calculation test' });
+    }
+});
+
+app.get('/api/users/:username/scores', async (req, res) => {
+    try {
+        // First get the user's total points (this is correct)
+        const totalPointsResult = await pool.query(`
+            SELECT COALESCE(SUM(ws.points), 0) as total_points
+            FROM users u
+            LEFT JOIN weekly_standings ws ON u.id = ws.user_id
+            WHERE u.username = $1
+            GROUP BY u.id
+        `, [req.params.username]);
+
+        // Then get scores with their weekly points
+        const scoresResult = await pool.query(`
+            WITH BestScores AS (
+                SELECT DISTINCT ON (user_id, week_number, year) 
+                    r.id as best_round_id
+                FROM rounds r
+                JOIN users u ON r.user_id = u.id
+                WHERE u.username = $1
+                GROUP BY user_id, week_number, year, r.id, (r.gross_score - u.handicap)
+                ORDER BY user_id, week_number, year, (r.gross_score - u.handicap) ASC
+            )
+            SELECT 
+                r.id,
+                r.date_played,
+                r.course_name,
+                r.gross_score,
+                r.week_number,
+                r.year,
+                u.handicap,
+                (r.gross_score - u.handicap) as net_score,
+                COALESCE(ws.points, 0) as points,
+                CASE WHEN bs.best_round_id IS NOT NULL THEN true ELSE false END as is_best_score
+            FROM users u
+            JOIN rounds r ON u.id = r.user_id
+            LEFT JOIN weekly_standings ws 
+                ON u.id = ws.user_id 
+                AND r.week_number = ws.week_number 
+                AND r.year = ws.year
+            LEFT JOIN BestScores bs ON r.id = bs.best_round_id
+            WHERE u.username = $1
+            ORDER BY r.date_played DESC
+        `, [req.params.username]);
+
+        res.json({
+            total_points: totalPointsResult.rows[0]?.total_points || 0,
+            scores: scoresResult.rows
+        });
+    } catch (error) {
+        console.error('Error fetching user scores:', error);
+        res.status(500).json({ error: 'Error fetching user scores' });
+    }
+});
+
+app.get('/api/users/:username/weekly-scores', async (req, res) => {
+    try {
+        const { week, year } = req.query;
+        const username = req.params.username;
+
+        const scoresResult = await pool.query(`
+            WITH BestScores AS (
+                SELECT DISTINCT ON (user_id) 
+                    r.id as best_round_id
+                FROM rounds r
+                JOIN users u ON r.user_id = u.id
+                WHERE u.username = $1
+                AND r.week_number = $2
+                AND r.year = $3
+                ORDER BY user_id, (r.gross_score - u.handicap) ASC
+            )
+            SELECT 
+                r.id,
+                r.date_played,
+                r.course_name,
+                r.gross_score,
+                u.handicap,
+                (r.gross_score - u.handicap) as net_score,
+                COALESCE(ws.points, 0) as points,
+                CASE WHEN bs.best_round_id IS NOT NULL THEN true ELSE false END as is_best_score
+            FROM users u
+            JOIN rounds r ON u.id = r.user_id
+            LEFT JOIN weekly_standings ws 
+                ON u.id = ws.user_id 
+                AND r.week_number = ws.week_number 
+                AND r.year = ws.year
+            LEFT JOIN BestScores bs ON r.id = bs.best_round_id
+            WHERE u.username = $1
+            AND r.week_number = $2
+            AND r.year = $3
+            ORDER BY r.date_played DESC
+        `, [username, week, year]);
+
+        res.json({
+            scores: scoresResult.rows
+        });
+    } catch (error) {
+        console.error('Error fetching weekly user scores:', error);
+        res.status(500).json({ error: 'Error fetching weekly user scores' });
     }
 });

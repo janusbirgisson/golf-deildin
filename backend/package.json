@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "setup": "node src/db/setup.js",
+    "setup": "NODE_ENV=development SETUP_DB=true node src/db/setup.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

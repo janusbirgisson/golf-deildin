@@ -23,6 +23,7 @@ function LoginForm({ onLoginSuccess }) {
         setError('');
 
         try {
+            console.log('Attempting login with:', { email: formData.email });
             const response = await fetch('/api/users/login', {
                 method: 'POST',
                 headers: {
@@ -31,10 +32,12 @@ function LoginForm({ onLoginSuccess }) {
                 body: JSON.stringify(formData),
             });
 
+            console.log('Response status:', response.status);
             const data = await response.json();
+            console.log('Response data:', data);
 
             if (!response.ok) {
-                throw new Error(data.message || 'Login failed');
+                throw new Error(data.error || 'Login failed');
             }
 
             // Store token and user data
@@ -52,6 +55,7 @@ function LoginForm({ onLoginSuccess }) {
             navigate('/');
 
         } catch (err) {
+            console.error('Login error:', err);
             setError(err.message || 'An error occurred during login');
         }
     };

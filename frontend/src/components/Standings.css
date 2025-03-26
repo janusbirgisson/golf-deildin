@@ -55,3 +55,26 @@
 .player-name {
     color: #333;
 }
+
+.total-points-banner {
+    background-color: #f5f5f5;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.best-score-row {
+    background-color: rgba(144, 238, 144, 0.1);  /* Light green background */
+}
+
+.best-score-indicator {
+    color: gold;
+    margin-left: 5px;
+    font-size: 1.2em;
+}
+
+/* Add hover effect to show which scores count */
+.best-score-row:hover {
+    background-color: rgba(144, 238, 144, 0.2);
+}
