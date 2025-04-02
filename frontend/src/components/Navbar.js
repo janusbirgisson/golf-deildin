@@ -10,7 +10,7 @@ function Navbar({ user, onLogout }) {
                 <div className="flex justify-between h-20 items-center">
                     <div className="flex-shrink-0">
                         <Link to="/" className="text-xl font-bold text-white">
-                            Golf deildin
+                            Golfdeildin
                         </Link>
                     </div>
 

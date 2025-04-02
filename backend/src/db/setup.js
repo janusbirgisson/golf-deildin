@@ -7,11 +7,11 @@ const bcrypt = require('bcrypt');
 const { getCurrentWeek } = require('../utils/weekCalculator');
 
 const pool = new Pool({
-    user: 'postgres',
+    user: process.env.DB_USER || 'postgres',
     host: process.env.DB_HOST || 'db.golf-deildin.orb.local',
-    database: 'golf_deildin',
-    password: 'aserthebest',
-    port: 5432,
+    database: process.env.DB_NAME || 'golf_deildin',
+    password: process.env.DB_PASSWORD || 'aserthebest',
+    port: process.env.DB_PORT || 5432,
 });
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -33,7 +33,8 @@ async function waitForDb(maxAttempts = 5) {
     }
 }
 
-if (process.env.NODE_ENV === 'development' && process.env.SETUP_DB === 'true') {
+// Allow running in both development and production when SETUP_DB is true
+if (process.env.SETUP_DB === 'true') {
     setupDatabase();
 }
 

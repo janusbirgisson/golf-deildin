@@ -6,6 +6,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "setup": "NODE_ENV=development SETUP_DB=true node src/db/setup.js",
+    "setup:prod": "NODE_ENV=production SETUP_DB=true node src/db/setup.js",
+    "start:prod": "npm run setup:prod && npm start",
     "test": "jest"
   },
   "keywords": [],
