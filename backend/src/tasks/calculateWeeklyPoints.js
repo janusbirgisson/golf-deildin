@@ -35,13 +35,11 @@ cron.schedule('59 23 * * *', async () => {
     }
 });
 
-// Add this development testing function
 async function testWeeklyCalculation() {
     const { week, year } = getCurrentWeek();
     console.log(`Testing calculation for week ${week}, year ${year}`);
     
     try {
-        // Same query as in the cron job
         const rounds = await pool.query(`
             SELECT 
                 r.id,
@@ -57,11 +55,9 @@ async function testWeeklyCalculation() {
 
         console.log('Found rounds:', rounds.rows);
         
-        // Rest of the calculation...
     } catch (error) {
         console.error('Test calculation error:', error);
     }
 }
 
-// Export for testing
 module.exports = { testWeeklyCalculation };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import './Standings.css';
 
 function UserScores() {
     const [scores, setScores] = useState([]);
@@ -37,54 +36,58 @@ function UserScores() {
     }
 
     return (
-        <div className="standings-section">
-            <h3>Saga {username}</h3>
-            <div className="total-points-banner">
-                <h4>Heildarstig: {totalPoints}</h4>
+        <div className="max-w-7xl mx-auto p-5 bg-tertiary rounded-lg shadow-md my-5 min-h-[400px]">
+            <div className="w-full flex justify-start mb-4">
+                <h2 className="text-2xl font-medium text-white">Saga {username}</h2>
             </div>
-            <table className="standings-table">
-                <thead>
-                    <tr>
-                        <th>Dagsetning</th>
-                        <th>Völlur</th>
-                        <th>Högg</th>
-                        <th>Forgjöf</th>
-                        <th>Nettó skor</th>
-                        <th>Vika</th>
-                        <th>Stig</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {scores.length > 0 ? (
-                        scores.map((score, index) => (
-                            <tr 
-                                key={score.id || index}
-                                className={score.is_best_score ? 'best-score-row' : ''}
-                                title={score.is_best_score ? 'Besti hringur vikunnar' : ''}
-                            >
-                                <td>{new Date(score.date_played).toLocaleDateString()}</td>
-                                <td>{score.course_name}</td>
-                                <td>{score.gross_score}</td>
-                                <td>{score.handicap}</td>
-                                <td>{score.net_score}</td>
-                                <td>Vika {score.week_number}</td>
-                                <td>
-                                    {score.points}
-                                    {score.is_best_score && (
-                                        <span className="best-score-indicator" title="Besti hringur vikunnar">★</span>
-                                    )}
+            <div className="bg-secondary p-4 rounded-lg mb-6">
+                <h3 className="text-xl font-medium text-white text-center">Heildarstig: {totalPoints}</h3>
+            </div>
+            <div className="w-full overflow-x-auto">
+                <table className="w-full table-auto">
+                    <thead>
+                        <tr className="text-lg bg-secondary">
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Dagsetning</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Völlur</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Högg</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Forgjöf</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Nettó skor</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Vika</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Stig</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {scores.length > 0 ? (
+                            scores.map((score, index) => (
+                                <tr 
+                                    key={score.id || index}
+                                    className="border-b border-neutral/30 hover:bg-secondary even:bg-secondary/30"
+                                    title={score.is_best_score ? 'Besti hringur vikunnar' : ''}
+                                >
+                                    <td className="p-3 text-neutral whitespace-nowrap">{new Date(score.date_played).toLocaleDateString()}</td>
+                                    <td className="p-3 text-neutral whitespace-nowrap">{score.course_name}</td>
+                                    <td className="p-3 text-white whitespace-nowrap">{score.gross_score}</td>
+                                    <td className="p-3 text-white whitespace-nowrap">{score.handicap}</td>
+                                    <td className="p-3 text-white whitespace-nowrap">{score.net_score}</td>
+                                    <td className="p-3 text-neutral whitespace-nowrap">Vika {score.week_number}</td>
+                                    <td className="p-3 font-semibold text-accent whitespace-nowrap">
+                                        {score.points}
+                                        {score.is_best_score && (
+                                            <span className="ml-2 text-yellow-400" title="Besti hringur vikunnar">★</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="7" className="p-3 text-center text-neutral">
+                                    Engir hringir skráðir
                                 </td>
                             </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="7" style={{textAlign: 'center'}}>
-                                Engir hringir skráðir
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

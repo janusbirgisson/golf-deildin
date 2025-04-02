@@ -31,47 +31,53 @@ function WeeklyStandings() {
         navigate(`/weekly-user/${encodeURIComponent(username)}/${week}/${year}`);
     };
 
-    if (loading) return <div className="standings-section">Loading...</div>;
-    if (error) return <div className="standings-section">Error: {error}</div>;
+    if (loading) return <div className="max-w-7xl mx-auto p-5">Loading...</div>;
+    if (error) return <div className="max-w-7xl mx-auto p-5">Error: {error}</div>;
 
     return (
-        <div className="standings-section">
-            <h3>Staðan þessa vikuna (Vika {week})</h3>
-            <table className="standings-table">
-                <thead>
-                    <tr>
-                        <th>Sæti</th>
-                        <th>Golfari</th>
-                        <th>Brúttó skor</th>
-                        <th>Forgjöf</th>
-                        <th>Nettó skor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {standings.map((standing, index) => (
-                        <tr key={standing.username || index}>
-                            <td className="position">{index + 1}</td>
-                            <td 
-                                className="player-name clickable" 
-                                onClick={() => handleUserClick(standing.username)}
-                                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+        <div className="max-w-7xl mx-auto p-5 bg-tertiary rounded-lg shadow-md my-5 min-h-[400px]">
+            <div className="w-full flex justify-start mb-4">
+                <h2 className="text-2xl font-medium text-white">Staðan þessa vikuna (Vika {week})</h2>
+            </div>
+            <div className="w-full overflow-x-auto">
+                <table className="w-full table-auto">
+                    <thead>
+                        <tr className="text-lg bg-secondary">
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Sæti</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Golfari</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Brúttó skor</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Forgjöf</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Nettó skor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {standings.map((standing, index) => (
+                            <tr 
+                                key={standing.username || index}
+                                className="border-b border-neutral/30 hover:bg-secondary even:bg-secondary/30"
                             >
-                                {standing.username}
-                            </td>
-                            <td className="gross-score">{standing.gross_score}</td>
-                            <td className="handicap">{standing.handicap}</td>
-                            <td className="net-score">{standing.net_score}</td>
-                        </tr>
-                    ))}
-                    {standings.length === 0 && (
-                        <tr>
-                            <td colSpan="5" style={{textAlign: 'center'}}>
-                                Engir hringir skráðir þessa vikuna
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                                <td className="p-3 font-medium text-neutral whitespace-nowrap">{index + 1}</td>
+                                <td 
+                                    className="p-3 text-neutral cursor-pointer hover:text-accent whitespace-nowrap"
+                                    onClick={() => handleUserClick(standing.username)}
+                                >
+                                    {standing.username}
+                                </td>
+                                <td className="p-3 text-white whitespace-nowrap">{standing.gross_score}</td>
+                                <td className="p-3 text-white whitespace-nowrap">{standing.handicap}</td>
+                                <td className="p-3 font-semibold text-accent whitespace-nowrap">{standing.net_score}</td>
+                            </tr>
+                        ))}
+                        {standings.length === 0 && (
+                            <tr>
+                                <td colSpan="5" className="p-3 text-center text-neutral">
+                                    Engir hringir skráðir þessa vikuna
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

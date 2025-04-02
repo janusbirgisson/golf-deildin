@@ -28,7 +28,7 @@ async function waitForDb(maxAttempts = 5) {
             if (attempt === maxAttempts) {
                 throw new Error('Max attempts reached. Could not connect to database.');
             }
-            await delay(2000); // Wait 2 seconds before next attempt
+            await delay(2000);
         }
     }
 }
@@ -42,7 +42,6 @@ async function setupDatabase() {
         console.log('Starting database setup...');
         await waitForDb();
 
-        // Drop existing tables
         console.log('Dropping existing tables...');
         await pool.query(`
             DROP TABLE IF EXISTS weekly_standings;
@@ -50,26 +49,23 @@ async function setupDatabase() {
             DROP TABLE IF EXISTS users;
         `);
 
-        // Create new tables
         console.log('Creating new tables...');
         const sqlFile = await fs.readFile(path.join(__dirname, '..', '..', 'database.sql'), 'utf8');
         await pool.query(sqlFile);
 
-        // Create admin user
         console.log('Creating admin user...');
         const adminResult = await pool.query(
             `INSERT INTO users (username, email, password, handicap)
              VALUES ($1, $2, $3, $4)
              RETURNING id`,
-            ['admin', 'admin@golf.com', await bcrypt.hash('admin123', 10), 0]
+            ['Janus', 'admin@golf.com', await bcrypt.hash('admin123', 10), 0]
         );
         const adminId = adminResult.rows[0].id;
 
-        // Create test users and store their IDs
         console.log('Creating test users...');
         const testUsers = [
             ['Tiger Woods', 'tiger@golf.com', 'tiger123', 0],
-            ['Phil Mickelson', 'phil@golf.com', 'phil123', 5],
+            ['Birgir Leifur Hafþórsson', 'birgir@golf.com', 'birgir123', 5],
             ['Rory McIlroy', 'rory@golf.com', 'rory123', 2]
         ];
 
@@ -84,28 +80,25 @@ async function setupDatabase() {
             userIds[result.rows[0].username] = result.rows[0].id;
         }
 
-        // Get current week/year
         const { week, year } = getCurrentWeek();
         console.log(`Setting up test data for current week ${week}, year ${year}`);
 
-        // Add test rounds for the current week
+        // Test rounds fyrir núverandi viku
         const testRounds = [
-            // Admin's rounds for current week
             {
                 userId: adminId,
-                date: new Date(), // Today's date
+                date: new Date(),
                 course: 'Augusta National',
                 score: 72,
                 week,
                 year,
-                points: 3,
-                round: {  // Add round object to match historical data format
+                points: 6,
+                round: {
                     date: new Date(),
                     course: 'Augusta National',
                     score: 72
                 }
             },
-            // Tiger's rounds
             {
                 userId: userIds['Tiger Woods'],
                 date: new Date(),
@@ -114,17 +107,59 @@ async function setupDatabase() {
                 week,
                 year,
                 points: 10,
-                round: {  // Add round object to match historical data format
+                round: {
                     date: new Date(),
                     course: 'St Andrews',
                     score: 68
                 }
+            },
+            {
+                userId: userIds['Birgir Leifur Hafþórsson'],
+                date: new Date(Date.now() - 24*60*60*1000),
+                course: 'Pine Valley',
+                score: 73,
+                week,
+                year,
+                points: 5,
+                round: {
+                    date: new Date(Date.now() - 24*60*60*1000),
+                    course: 'Pine Valley',
+                    score: 73
+                }
+            },
+            {
+                userId: userIds['Birgir Leifur Hafþórsson'],
+                date: new Date(),
+                course: 'Augusta National',
+                score: 70,
+                week,
+                year,
+                points: 8,
+                round: {
+                    date: new Date(),
+                    course: 'Augusta National',
+                    score: 70
+                }
+            },
+            {
+                userId: userIds['Rory McIlroy'],
+                date: new Date(),
+                course: 'St Andrews',
+                score: 69,
+                week,
+                year,
+                points: 9,
+                round: {
+                    date: new Date(),
+                    course: 'St Andrews',
+                    score: 69
+                }
             }
         ];
 
-        // Insert rounds and their corresponding points
+        // Bæta við hringjum og samsvarandi stigum
         for (const round of testRounds) {
-            // Insert round first
+            // Fyrst bæta við hringjum
             const roundResult = await pool.query(
                 `INSERT INTO rounds (user_id, date_played, course_name, gross_score, week_number, year)
                  VALUES ($1, $2, $3, $4, $5, $6)
@@ -132,7 +167,7 @@ async function setupDatabase() {
                 [round.userId, round.round.date, round.round.course, round.round.score, round.week, round.year]
             );
 
-            // Insert weekly standing with round_id
+            // Bæta við weekly standing með round_id
             await pool.query(
                 `INSERT INTO weekly_standings (user_id, week_number, year, points, round_id)
                  VALUES ($1, $2, $3, $4, $5)
@@ -142,41 +177,107 @@ async function setupDatabase() {
             );
         }
 
-        // Add some historical data (previous weeks)
+        // Bæta við sögulegum gögnum (fyrri vikur)
         const historicalData = [
             // Week week-2
             {
                 userId: userIds['Tiger Woods'],
                 week: week - 2,
                 year,
+                points: 8,
+                round: {
+                    date: new Date(Date.now() - (15 * 24 * 60 * 60 * 1000)),
+                    course: 'St Andrews',
+                    score: 68
+                }
+            },
+            {
+                userId: userIds['Tiger Woods'],
+                week: week - 2,
+                year,
                 points: 10,
                 round: {
-                    date: new Date(Date.now() - (14 * 24 * 60 * 60 * 1000)), // 2 weeks ago
+                    date: new Date(Date.now() - (14 * 24 * 60 * 60 * 1000)),
                     course: 'Pebble Beach',
                     score: 65
                 }
             },
             {
-                userId: adminId,
+                userId: userIds['Birgir Leifur Hafþórsson'],
+                week: week - 2,
+                year,
+                points: 10,
+                round: {
+                    date: new Date(Date.now() - (14 * 24 * 60 * 60 * 1000)),
+                    course: 'Augusta National',
+                    score: 67
+                }
+            },
+            {
+                userId: userIds['Rory McIlroy'],
                 week: week - 2,
                 year,
                 points: 7,
                 round: {
                     date: new Date(Date.now() - (14 * 24 * 60 * 60 * 1000)),
                     course: 'St Andrews',
+                    score: 71
+                }
+            },
+            {
+                userId: adminId,
+                week: week - 2,
+                year,
+                points: 8,
+                round: {
+                    date: new Date(Date.now() - (14 * 24 * 60 * 60 * 1000)),
+                    course: 'Augusta National',
                     score: 70
                 }
             },
             // Week week-1
             {
-                userId: userIds['Phil Mickelson'],
+                userId: userIds['Tiger Woods'],
                 week: week - 1,
                 year,
                 points: 10,
                 round: {
-                    date: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)), // 1 week ago
+                    date: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)),
+                    course: 'St Andrews',
+                    score: 66
+                }
+            },
+            {
+                userId: userIds['Birgir Leifur Hafþórsson'],
+                week: week - 1,
+                year,
+                points: 9,
+                round: {
+                    date: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)),
                     course: 'Augusta National',
-                    score: 67
+                    score: 68
+                }
+            },
+            {
+                userId: userIds['Rory McIlroy'],
+                week: week - 1,
+                year,
+                points: 6,
+                round: {
+                    date: new Date(Date.now() - (8 * 24 * 60 * 60 * 1000)),
+                    course: 'Pebble Beach',
+                    score: 72
+                }
+            },
+            {
+                userId: userIds['Rory McIlroy'],
+                week: week - 1,
+                year,
+                points: 8,
+                round: {
+                    date: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)),
+                    course: 'St Andrews',
+                    score: 70
                 }
             },
             {
@@ -185,16 +286,27 @@ async function setupDatabase() {
                 year,
                 points: 5,
                 round: {
-                    date: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)),
+                    date: new Date(Date.now() - (8 * 24 * 60 * 60 * 1000)),
                     course: 'Pine Valley',
                     score: 73
+                }
+            },
+            {
+                userId: adminId,
+                week: week - 1,
+                year,
+                points: 7,
+                round: {
+                    date: new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)),
+                    course: 'Augusta National',
+                    score: 71
                 }
             }
         ];
 
-        // Insert historical rounds and their corresponding points
+        // Bæta við sögulegum hringjum og samsvarandi stigum
         for (const data of historicalData) {
-            // Insert round first
+            // Fyrst bæta við hringjum
             const roundResult = await pool.query(
                 `INSERT INTO rounds (user_id, date_played, course_name, gross_score, week_number, year)
                  VALUES ($1, $2, $3, $4, $5, $6)
@@ -202,7 +314,7 @@ async function setupDatabase() {
                 [data.userId, data.round.date, data.round.course, data.round.score, data.week, data.year]
             );
 
-            // Insert weekly standing with round_id
+            // Bæta við weekly standing með round_id
             await pool.query(
                 `INSERT INTO weekly_standings (user_id, week_number, year, points, round_id)
                  VALUES ($1, $2, $3, $4, $5)
@@ -212,16 +324,18 @@ async function setupDatabase() {
             );
         }
 
-        // Log expected totals
         console.log('\nTest data added successfully!');
         console.log('Expected standings for current week:');
         console.log('Tiger Woods: 10 points');
-        console.log('Admin: 3 points');
+        console.log('Rory McIlroy: 9 points');
+        console.log('Birgir Leifur Hafþórsson: 8 points');
+        console.log('Janus: 6 points');
         
         console.log('\nExpected overall standings:');
-        console.log('Tiger Woods: 20 points (10 + 10 + 0)');
-        console.log('Admin: 15 points (3 + 5 + 7)');
-        console.log('Phil Mickelson: 10 points (0 + 10 + 0)');
+        console.log('Tiger Woods: 30 points (10 + 10 + 10)');
+        console.log('Birgir Leifur Hafþórsson: 27 points (8 + 10 + 9)');
+        console.log('Rory McIlroy: 24 points (9 + 7 + 8)');
+        console.log('Janus: 21 points (6 + 8 + 7)');
 
     } catch (error) {
         console.error('Error setting up database:', error);

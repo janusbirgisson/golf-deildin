@@ -85,15 +85,19 @@ app.post('/api/users/register', async (req, res) => {
 
 app.get('/api/standings/overall', async (req, res) => {
     try {
+        const { week, year } = getCurrentWeek();
+        const deadline = getWeekDeadline(week, year);
+        
         const result = await pool.query(`
             SELECT 
                 u.username,
                 COALESCE(SUM(ws.points), 0) as total_points
             FROM users u
             LEFT JOIN weekly_standings ws ON u.id = ws.user_id
+            WHERE ws.week_number < $1 OR (ws.week_number = $1 AND ws.year < $2)
             GROUP BY u.id, u.username
             ORDER BY total_points DESC NULLS LAST
-        `);
+        `, [week, year]);
         
         res.json(result.rows);
     } catch (error) {
@@ -281,14 +285,17 @@ app.post('/api/test-weekly-calculation', async (req, res) => {
 
 app.get('/api/users/:username/scores', async (req, res) => {
     try {
-        // First get the user's total points (this is correct)
+        const { week, year } = getCurrentWeek();
+        
+        // First get the user's total points (only from completed weeks)
         const totalPointsResult = await pool.query(`
             SELECT COALESCE(SUM(ws.points), 0) as total_points
             FROM users u
             LEFT JOIN weekly_standings ws ON u.id = ws.user_id
             WHERE u.username = $1
+            AND (ws.week_number < $2 OR (ws.week_number = $2 AND ws.year < $3))
             GROUP BY u.id
-        `, [req.params.username]);
+        `, [req.params.username, week, year]);
 
         // Then get scores with their weekly points
         const scoresResult = await pool.query(`
@@ -298,6 +305,7 @@ app.get('/api/users/:username/scores', async (req, res) => {
                 FROM rounds r
                 JOIN users u ON r.user_id = u.id
                 WHERE u.username = $1
+                AND (r.week_number < $2 OR (r.week_number = $2 AND r.year < $3))
                 GROUP BY user_id, week_number, year, r.id, (r.gross_score - u.handicap)
                 ORDER BY user_id, week_number, year, (r.gross_score - u.handicap) ASC
             )
@@ -311,7 +319,10 @@ app.get('/api/users/:username/scores', async (req, res) => {
                 u.handicap,
                 (r.gross_score - u.handicap) as net_score,
                 COALESCE(ws.points, 0) as points,
-                CASE WHEN bs.best_round_id IS NOT NULL THEN true ELSE false END as is_best_score
+                CASE 
+                    WHEN bs.best_round_id IS NOT NULL THEN true 
+                    ELSE false 
+                END as is_best_score
             FROM users u
             JOIN rounds r ON u.id = r.user_id
             LEFT JOIN weekly_standings ws 
@@ -321,7 +332,7 @@ app.get('/api/users/:username/scores', async (req, res) => {
             LEFT JOIN BestScores bs ON r.id = bs.best_round_id
             WHERE u.username = $1
             ORDER BY r.date_played DESC
-        `, [req.params.username]);
+        `, [req.params.username, week, year]);
 
         res.json({
             total_points: totalPointsResult.rows[0]?.total_points || 0,

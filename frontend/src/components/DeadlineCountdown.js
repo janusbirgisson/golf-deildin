@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getCurrentWeek, getWeekDeadline } from './weekCalculator';
-import './DeadlineCountdown.css';
-
 
 function DeadlineCountdown() {
     const [timeLeft, setTimeLeft] = useState({
@@ -46,27 +44,29 @@ function DeadlineCountdown() {
         return () => clearInterval(timer);
     }, []);
 
-
-    
     return (
-        <div className="deadline-countdown">
-            <h3>Tími eftir til að skrá inn skor:</h3>
-            <div className="countdown-timer">
-                <div className="countdown-segment">
-                    <span className="countdown-number">{timeLeft.days}</span>
-                    <span className="countdown-label">Dagar</span>
+        <div className="max-w-7xl mx-auto p-6 bg-secondary rounded-lg shadow-md">
+            <div className="w-full flex justify-center mb-2">
+                <h2 className="text-3xl font-medium text-white">
+                    Tími eftir til að skrá inn skor:
+                </h2>
+            </div>
+            <div className="flex justify-center items-center space-x-8">
+                <div className="flex flex-col items-center">
+                    <span className="text-4xl font-medium text-accent">{timeLeft.days}</span>
+                    <span className="text-sm text-neutral">Dagar</span>
                 </div>
-                <div className="countdown-segment">
-                    <span className="countdown-number">{timeLeft.hours}</span>
-                    <span className="countdown-label">Klst.</span>
+                <div className="flex flex-col items-center">
+                    <span className="text-4xl font-medium text-accent">{timeLeft.hours}</span>
+                    <span className="text-sm text-neutral">Klst.</span>
                 </div>
-                <div className="countdown-segment">
-                    <span className="countdown-number">{timeLeft.minutes}</span>
-                    <span className="countdown-label">Mínútur</span>
+                <div className="flex flex-col items-center">
+                    <span className="text-4xl font-medium text-accent">{timeLeft.minutes}</span>
+                    <span className="text-sm text-neutral">Mínútur</span>
                 </div>
-                <div className="countdown-segment">
-                    <span className="countdown-number">{timeLeft.seconds}</span>
-                    <span className="countdown-label">Sekúndur</span>
+                <div className="flex flex-col items-center">
+                    <span className="text-4xl font-medium text-accent">{timeLeft.seconds}</span>
+                    <span className="text-sm text-neutral">Sekúndur</span>
                 </div>
             </div>
         </div>

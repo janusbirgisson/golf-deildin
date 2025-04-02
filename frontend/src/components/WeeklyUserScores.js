@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import './Standings.css';
 
 function WeeklyUserScores() {
     const [scores, setScores] = useState([]);
@@ -35,41 +34,45 @@ function WeeklyUserScores() {
     }
 
     return (
-        <div className="standings-section">
-            <h3>Hringir {username} fyrir viku {week}</h3>
-            <table className="standings-table">
-                <thead>
-                    <tr>
-                        <th>Dagsetning</th>
-                        <th>Völlur</th>
-                        <th>Högg</th>
-                        <th>Forgjöf</th>
-                        <th>Nettó skor</th>
-                        <th>Stig</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {scores.map((score, index) => (
-                        <tr 
-                            key={score.id || index}
-                            className={score.is_best_score ? 'best-score-row' : ''}
-                            title={score.is_best_score ? 'Besti hringur vikunnar' : ''}
-                        >
-                            <td>{new Date(score.date_played).toLocaleDateString()}</td>
-                            <td>{score.course_name}</td>
-                            <td>{score.gross_score}</td>
-                            <td>{score.handicap}</td>
-                            <td>{score.net_score}</td>
-                            <td>
-                                {score.points}
-                                {score.is_best_score && (
-                                    <span className="best-score-indicator" title="Besti hringur vikunnar">★</span>
-                                )}
-                            </td>
+        <div className="max-w-7xl mx-auto p-5 bg-tertiary rounded-lg shadow-md my-5 min-h-[400px]">
+            <div className="w-full flex justify-start mb-4">
+                <h2 className="text-2xl font-medium text-white">Hringir {username} fyrir viku {week}</h2>
+            </div>
+            <div className="w-full overflow-x-auto">
+                <table className="w-full table-auto">
+                    <thead>
+                        <tr className="text-lg bg-secondary">
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Dagsetning</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Völlur</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Högg</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Forgjöf</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Nettó skor</th>
+                            <th className="p-3 text-left font-medium text-white whitespace-nowrap">Stig</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {scores.map((score, index) => (
+                            <tr 
+                                key={score.id || index}
+                                className="border-b border-neutral/30 hover:bg-secondary even:bg-secondary/30"
+                                title={score.is_best_score ? 'Besti hringur vikunnar' : ''}
+                            >
+                                <td className="p-3 text-neutral whitespace-nowrap">{new Date(score.date_played).toLocaleDateString()}</td>
+                                <td className="p-3 text-neutral whitespace-nowrap">{score.course_name}</td>
+                                <td className="p-3 text-white whitespace-nowrap">{score.gross_score}</td>
+                                <td className="p-3 text-white whitespace-nowrap">{score.handicap}</td>
+                                <td className="p-3 text-white whitespace-nowrap">{score.net_score}</td>
+                                <td className="p-3 font-semibold text-accent whitespace-nowrap">
+                                    {score.points}
+                                    {score.is_best_score && (
+                                        <span className="ml-2 text-yellow-400" title="Besti hringur vikunnar">★</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

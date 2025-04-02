@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import UserScores from './components/UserScores';
 import WeeklyUserScores from './components/WeeklyUserScores';
+import WeekCalculatorDebugger from './components/WeekCalculatorDebugger';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -28,18 +29,23 @@ function App() {
   }
 
   return (
-    <Router>
-      <Navbar user={user} onLogout={handleLogout} />
-      <Routes>
-        <Route path="/" element={<Leaderboard />} />
-        <Route path="/register" element={<RegisterForm />} />
-        <Route path="/login" element={<LoginForm onLoginSuccess={setUser} />} />
-        <Route path="/submit" element={user ? <ScoreForm /> : <Navigate to="/login" />} />
-        <Route path="/user/:username" element={<UserScores />} />
-        <Route path="/weekly-user/:username/:week/:year" element={<WeeklyUserScores />} />
-      </Routes>
-      <Footer />
-    </Router>
+    <div className="min-h-screen bg-white flex flex-col">
+      <Router>
+        <Navbar user={user} onLogout={handleLogout} />
+        <div className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Leaderboard />} />
+            <Route path="/debug" element={<WeekCalculatorDebugger />} />
+            <Route path="/register" element={<RegisterForm />} />
+            <Route path="/login" element={<LoginForm onLoginSuccess={setUser} />} />
+            <Route path="/submit" element={user ? <ScoreForm /> : <Navigate to="/login" />} />
+            <Route path="/user/:username" element={<UserScores />} />
+            <Route path="/weekly-user/:username/:week/:year" element={<WeeklyUserScores />} />
+          </Routes>
+        </div>
+        <Footer />
+      </Router>
+    </div>
   );
 }
 

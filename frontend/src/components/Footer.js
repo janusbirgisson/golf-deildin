@@ -1,9 +1,8 @@
 import React from "react";
-import "./Footer.css";
 
 function Footer() {
     return (
-        <footer className="main-footer">
+        <footer className="w-full bg-primary text-white p-6 text-center">
             <p>&copy; {new Date().getFullYear()} Golf deildin </p>
         </footer>
     );

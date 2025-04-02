@@ -1,10 +1,13 @@
 .standings-section {
+    max-width: 1200px;
+    margin: 0 auto;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 20px;
     flex: 1;
     min-width: 300px;
+    margin-top: 20px;
 }
 
 .standings-section h3 {
@@ -12,6 +15,14 @@
     margin-bottom: 20px;
     padding-bottom: 10px;
     border-bottom: 2px solid #f0f0f0;
+}
+
+.table-container {
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .standings-table {
@@ -77,4 +88,11 @@
 /* Add hover effect to show which scores count */
 .best-score-row:hover {
     background-color: rgba(144, 238, 144, 0.2);
+}
+
+/* Add responsive styles for the table */
+@media (max-width: 768px) {
+    .standings-table {
+        min-width: 600px; /* Force minimum width for small screens */
+    }
 }
