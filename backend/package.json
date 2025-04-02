@@ -8,7 +8,9 @@
     "setup": "NODE_ENV=development SETUP_DB=true node src/db/setup.js",
     "setup:prod": "NODE_ENV=production SETUP_DB=true node src/db/setup.js",
     "start:prod": "npm run setup:prod && npm start",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "npm rebuild bcrypt --build-from-source",
+    "build": "npm install"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +31,7 @@
     "@types/jest": "^29.5.14",
     "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "python": "^0.0.4"
   }
 }
