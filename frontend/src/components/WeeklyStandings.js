@@ -12,7 +12,7 @@ function WeeklyStandings() {
 
     useEffect(() => {
         setLoading(true);
-        fetch(`${process.env.REACT_APP_API_URL}/standings/weekly?week=${week}&year=${year}`)
+        fetch(`${process.env.REACT_APP_API_URL}/api/standings/weekly?week=${week}&year=${year}`)
             .then(res => {
                 if (!res.ok) throw new Error('Failed to fetch standings');
                 return res.json();
