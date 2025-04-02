@@ -8,7 +8,7 @@ function OverallStandings() {
     const navigate = useNavigate();
     useEffect(() => {
         setLoading(true);
-        fetch('/api/standings/overall')
+        fetch(`${process.env.REACT_APP_API_URL}/standings/overall`)
             .then(res => {
                 if (!res.ok) throw new Error('Failed to fetch standings');
                 return res.json();
