@@ -9,7 +9,7 @@ function WeeklyUserScores() {
 
     useEffect(() => {
         setLoading(true);
-        fetch(`${process.env.REACT_APP_API_URL}/users/${encodeURIComponent(username)}/weekly-scores?week=${week}&year=${year}`)
+        fetch(`${process.env.REACT_APP_API_URL}/api/users/${encodeURIComponent(username)}/weekly-scores?week=${week}&year=${year}`)
             .then(res => {
                 if (!res.ok) throw new Error('Failed to fetch scores');
                 return res.json();
