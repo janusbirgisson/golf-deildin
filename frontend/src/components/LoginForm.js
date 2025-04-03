@@ -24,7 +24,7 @@ function LoginForm({ onLoginSuccess }) {
 
         try {
             console.log('Attempting login with:', { email: formData.email });
-            const response = await fetch('/api/users/login', {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

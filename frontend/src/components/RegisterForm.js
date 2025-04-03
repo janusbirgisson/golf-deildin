@@ -25,7 +25,7 @@ function RegisterForm() {
         setError('');
 
         try {
-            const response = await fetch('/api/users/register', {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
