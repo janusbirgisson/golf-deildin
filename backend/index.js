@@ -390,3 +390,63 @@ app.get('/api/users/:username/weekly-scores', async (req, res) => {
         res.status(500).json({ error: 'Error fetching weekly user scores' });
     }
 });
+
+app.post('/api/simulate-deadline', async (req, res) => {
+    console.log('Simulating deadline calculation...');
+    const now = new Date();
+    const { week, year } = getCurrentWeek();
+    
+    try {
+        const rounds = await pool.query(`
+            SELECT DISTINCT ON (r.user_id)
+                r.id,
+                r.user_id,
+                r.gross_score,
+                r.date_played,
+                u.handicap,
+                u.username,
+                (r.gross_score - u.handicap) as netscore
+            FROM rounds r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.week_number = $1 AND r.year = $2
+            ORDER BY r.user_id, r.date_played DESC
+        `, [week, year]);
+        
+        console.log(`Found ${rounds.rows.length} most recent rounds to process`);
+        console.log('Rounds before sorting:', rounds.rows);
+        
+        const sortedRounds = rounds.rows.sort((a, b) => 
+            (a.gross_score - a.handicap) - (b.gross_score - b.handicap)
+        );
+        
+        console.log('Rounds after sorting by net score:', sortedRounds);
+        
+        const points = [10, 8, 6, 4, 2];
+
+        for (let i = 0; i < sortedRounds.length; i++) {
+            const round = sortedRounds[i];
+            await pool.query(`
+                INSERT INTO weekly_standings (week_number, year, user_id, round_id, points)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (week_number, user_id, year) 
+                DO UPDATE SET points = EXCLUDED.points
+            `, [week, year, round.user_id, round.id, points[i] || 1]);
+            console.log(`Assigned ${points[i] || 1} points to ${round.username} (user_id: ${round.user_id}) for their most recent round ${round.id} (played on ${round.date_played}) with net score ${round.netscore}`);
+        }
+
+        res.json({
+            message: 'Deadline simulation completed',
+            processedRounds: sortedRounds.map(round => ({
+                username: round.username,
+                gross_score: round.gross_score,
+                handicap: round.handicap,
+                net_score: round.netscore,
+                date_played: round.date_played,
+                points: points[sortedRounds.indexOf(round)] || 1
+            }))
+        });
+    } catch (error) {
+        console.error('Error in deadline simulation:', error);
+        res.status(500).json({ error: 'Failed to simulate deadline' });
+    }
+});
