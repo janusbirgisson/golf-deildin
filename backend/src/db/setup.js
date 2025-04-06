@@ -33,7 +33,6 @@ async function waitForDb(maxAttempts = 5) {
     }
 }
 
-// Allow running in both development and production when SETUP_DB is true
 if (process.env.SETUP_DB === 'true') {
     setupDatabase();
 }

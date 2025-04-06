@@ -40,14 +40,11 @@ function LoginForm({ onLoginSuccess }) {
                 throw new Error(data.error || 'Login failed');
             }
 
-            // Store token and user data
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             
-            // Update parent component with user data
             onLoginSuccess(data.user);
 
-            // Clear form and redirect to home
             setFormData({
                 email: '',
                 password: ''

@@ -76,7 +76,7 @@
 }
 
 .best-score-row {
-    background-color: rgba(144, 238, 144, 0.1);  /* Light green background */
+    background-color: rgba(144, 238, 144, 0.1);
 }
 
 .best-score-indicator {
@@ -85,14 +85,12 @@
     font-size: 1.2em;
 }
 
-/* Add hover effect to show which scores count */
 .best-score-row:hover {
     background-color: rgba(144, 238, 144, 0.2);
 }
 
-/* Add responsive styles for the table */
 @media (max-width: 768px) {
     .standings-table {
-        min-width: 600px; /* Force minimum width for small screens */
+        min-width: 600px;
     }
 }

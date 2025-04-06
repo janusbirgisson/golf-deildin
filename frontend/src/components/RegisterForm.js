@@ -42,7 +42,6 @@ function RegisterForm() {
                 throw new Error(data.message || 'Registration failed');
             }
 
-            // Clear form and redirect to login
             setFormData({
                 username: '',
                 email: '',

@@ -47,7 +47,6 @@ function ScoreForm() {
                 throw new Error('No authentication token found');
             }
 
-            // Updated endpoint to match backend
             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/rounds`, {
                 method: 'POST',
                 headers: {
@@ -148,7 +147,7 @@ function ScoreForm() {
                         value={formData.date}
                         onChange={handleChange}
                         required
-                        max={new Date().toISOString().split('T')[0]} // Can't select future dates
+                        max={new Date().toISOString().split('T')[0]}
                     />
                 </div>
 

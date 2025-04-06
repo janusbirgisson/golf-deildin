@@ -358,7 +358,7 @@ app.get('/api/users/:username/weekly-scores', async (req, res) => {
                 WHERE u.username = $1
                 AND r.week_number = $2
                 AND r.year = $3
-                ORDER BY user_id, (r.gross_score - u.handicap) ASC
+                ORDER BY user_id, r.date_played DESC
             )
             SELECT 
                 r.id,
@@ -433,6 +433,23 @@ app.post('/api/simulate-deadline', async (req, res) => {
             `, [week, year, round.user_id, round.id, points[i] || 1]);
             console.log(`Assigned ${points[i] || 1} points to ${round.username} (user_id: ${round.user_id}) for their most recent round ${round.id} (played on ${round.date_played}) with net score ${round.netscore}`);
         }
+
+        const verificationResult = await pool.query(`
+            SELECT 
+                u.username,
+                ws.points,
+                r.gross_score,
+                u.handicap,
+                (r.gross_score - u.handicap) as net_score,
+                r.date_played
+            FROM weekly_standings ws
+            JOIN users u ON ws.user_id = u.id
+            JOIN rounds r ON ws.round_id = r.id
+            WHERE ws.week_number = $1 AND ws.year = $2
+            ORDER BY ws.points DESC
+        `, [week, year]);
+
+        console.log('Verification of saved points:', verificationResult.rows);
 
         res.json({
             message: 'Deadline simulation completed',
