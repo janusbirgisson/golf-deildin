@@ -1,80 +1,90 @@
-## Til að kveikja á:
-- `pg_ctl -D /usr/local/var/postgres stop`
-- `docker-compose down`
-- `docker-compose up -d`
-- `cd backend && npm start`
-- `cd frontend && npm start`
+# Golfdeildin
 
+Stigakerfi fyrir golfdeild með React framenda og Node.js bakenda.
 
+## Uppsetning og keyrsla
 
+### Forsendur
+- Node.js
+- Docker
+- PostgreSQL
+- npm
 
-# Getting Started with Create React App
+### Keyrsla á þróunarumhverfi
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+1. Stöðva PostgreSQL ef það er í gangi:
+```bash
+pg_ctl -D /usr/local/var/postgres stop
+```
 
-## Available Scripts
+2. Ræsa gagnagrunn með Docker:
+```bash
+docker-compose down
+docker-compose up -d
+```
 
-In the project directory, you can run:
+3. Ræsa bakenda:
+```bash
+cd backend
+npm install
+npm start
+```
 
-### `npm start`
+4. Ræsa framenda (í nýjum terminal glugga):
+```bash
+cd frontend
+npm install
+npm start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Vefsíðan opnast sjálfkrafa á [http://localhost:4001](http://localhost:4001)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Aðgerðir
 
-### `npm test`
+### Framendi (`npm` skipanir)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- `npm start`: Keyrir forritið í þróunarham (development mode) á porti 4001
+- `npm test`: Keyrir prófanir með Jest
+- `npm run build`: Byggir forritið fyrir framleiðslu
 
-### `npm run build`
+### Helstu eiginleikar
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Notendaskráning og innskráning
+- Skráning á golfskori
+- Viku- og heildarstigatafla
+- Vikuleg stigagjöf
+- Tölfræði fyrir hvern golfara
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Teck Stack
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Framendi:
+  - React 18
+  - Tailwind CSS
+  - Jest fyrir prófanir
 
-### `npm run eject`
+- Bakendi:
+  - Node.js
+  - Express
+  - PostgreSQL
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Uppsetning fyrir framleiðslu
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Byggja framenda:
+```bash
+cd frontend
+npm run build
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+2. Byggja bakenda:
+```bash
+cd backend
+npm run build
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Gagnagrunnstenging
 
-## Learn More
+Forritið notar PostgreSQL gagnagrunn sem keyrir í Docker container. Gagnagrunnstengingin er skilgreind í `docker-compose.yml` skránni.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Verkefnið var búið til með [Create React App](https://github.com/facebook/create-react-app).
