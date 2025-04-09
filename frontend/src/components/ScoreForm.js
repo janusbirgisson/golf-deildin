@@ -25,7 +25,7 @@ function ScoreForm() {
 
     const validateScore = (score) => {
         const numScore = parseInt(score, 10);
-        return numScore > 0 && numScore < 200; // Basic validation for realistic golf scores
+        return numScore > 0 && numScore < 200;
     };
 
     const handleSubmit = async (e) => {

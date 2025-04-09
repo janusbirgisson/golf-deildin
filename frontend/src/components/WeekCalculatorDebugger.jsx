@@ -8,7 +8,6 @@ function WeekCalculatorDebugger() {
     const [results, setResults] = useState(null);
 
     const runTest = () => {
-        // Combine date and time
         const fullDateTime = `${testDate}T${testTime}:00.000Z`;
         const cleanup = simulateDate(fullDateTime);
         

@@ -4,7 +4,6 @@ const { pool } = require('../db/setup');
 
 console.log('Setting up weekly points calculation cron job for Sunday nights...');
 
-// Run at 23:59 every Sunday (0 is Sunday in cron)
 cron.schedule('59 23 * * 0', async () => {
     const now = new Date();
     const { week, year } = getCurrentWeek();
@@ -30,7 +29,6 @@ cron.schedule('59 23 * * 0', async () => {
         
         console.log(`Found ${rounds.rows.length} most recent rounds to process`);
         
-        // Sort by net score for points assignment
         const sortedRounds = rounds.rows.sort((a, b) => 
             (a.gross_score - a.handicap) - (b.gross_score - b.handicap)
         );

@@ -108,8 +108,6 @@ app.get('/api/standings/overall', async (req, res) => {
 
 app.get('/api/rounds', async (req, res) => {
     try {
-        // This is a simple query that grabs all rounds.
-        // You could ORDER BY date_played, user_id, or whatever you need.
         const result = await pool.query(`
             SELECT
                 r.id,
@@ -125,7 +123,6 @@ app.get('/api/rounds', async (req, res) => {
             ORDER BY net_score ASC
         `);
     
-        // Return the rows as JSON
         res.json(result.rows);
       } catch (error) {
         console.error('Error fetching rounds', error);
@@ -139,7 +136,6 @@ app.post('/api/rounds', authMiddleware, async (req, res) => {
     const deadline = getWeekDeadline(week, year);
 
     try {
-        // Check if past deadline
         if (new Date() > deadline) {
             return res.status(400).json({ error: 'Past deadline for this week' });
         }
@@ -148,13 +144,11 @@ app.post('/api/rounds', authMiddleware, async (req, res) => {
         try {
             await client.query('BEGIN');
 
-            // Update user handicap
             await client.query(
                 `UPDATE users SET handicap = $1 WHERE id = $2`,
                 [handicap, req.user.userId]
             );
 
-            // Insert new round
             const result = await client.query(
                 `INSERT INTO rounds (user_id, date_played, course_name, gross_score, week_number, year)
                  VALUES ($1, $2, $3, $4, $5, $6)
@@ -179,7 +173,7 @@ app.post('/api/rounds', authMiddleware, async (req, res) => {
 app.post('/api/users/login', async (req, res) => {
     const { email, password } = req.body;
     
-    console.log('Login attempt:', { email }); // Don't log password
+    console.log('Login attempt:', { email });
 
     try {
         const userResult = await pool.query(
@@ -287,7 +281,6 @@ app.get('/api/users/:username/scores', async (req, res) => {
     try {
         const { week, year } = getCurrentWeek();
         
-        // First get the user's total points (only from completed weeks)
         const totalPointsResult = await pool.query(`
             SELECT COALESCE(SUM(ws.points), 0) as total_points
             FROM users u
@@ -297,7 +290,6 @@ app.get('/api/users/:username/scores', async (req, res) => {
             GROUP BY u.id
         `, [req.params.username, week, year]);
 
-        // Then get scores with their weekly points
         const scoresResult = await pool.query(`
             WITH BestScores AS (
                 SELECT DISTINCT ON (user_id, week_number, year) 
